@@ -28,19 +28,23 @@ public class FinancialIndicatorsViewModel : INotifyPropertyChanged {
             var startDateFormat = startDate.ToString("yyyy-MM-dd");
             var endDateFormat = endDate.ToString("yyyy-MM-dd");
 
-            var url = $"https://olinda.bcb.gov.br/olinda/servico/Expectativas/versao/v1/odata/ExpectativaMercadoMensais?$filter=Indicador eq '{indicatorType}' and DataIndicador ge {startDateFormat} and DataIndicador le {endDateFormat}";
+            var url = $"https://olinda.bcb.gov.br/olinda/servico/Expectativas/versao/v1/odata/ExpectativaMercadoMensais?$filter=Indicador eq '{indicatorType}' and DataIndicador ge {startDateFormat} and DataIndicador le {endDateFormat}&$format=json";
 
             using (var client = new HttpClient()) {
                 var response = await client.GetAsync(url);
-                response.EnsureSuccessStatusCode();
-                var responseString = await response.Content.ReadAsStringAsync();
-                var data = JsonConvert.DeserializeObject<Rootobject>(responseString);
-                IndicatorDataList = new ObservableCollection<IndicatorData>(data.value);
+                if (response.IsSuccessStatusCode) {
+                    var responseString = await response.Content.ReadAsStringAsync();
+                    var data = JsonConvert.DeserializeObject<Rootobject>(responseString);
+                    IndicatorDataList = new ObservableCollection<IndicatorData>(data.value);
+                } else {
+                    Console.WriteLine($"Erro na resposta: {response.StatusCode}");
+                }
             }
         } catch (Exception ex) {
             Console.WriteLine($"Ocorreu um erro: {ex.Message}");
         }
     }
+
 
     public void ExportToCSV(string filePath) {
         try {
